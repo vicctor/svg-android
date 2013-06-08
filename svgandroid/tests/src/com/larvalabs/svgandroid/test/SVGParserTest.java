@@ -51,6 +51,22 @@ public class SVGParserTest extends AndroidTestCase {
         assertTrue(diff < 0.1);
     }
 
+    
+    public void testEFloats() throws Exception {
+        AssetManager assets = getContext().getAssets();
+        SVG svg = SVGParser.getSVGFromAsset(assets, "svg/gclef.svg");
+        SVGTestPair pair = new SVGTestPair(assets.open("png/gclef.png"), svg, "strokes");
+
+        assertTrue(pair.comparePointsOnHorizontalLine(113, 200));
+        assertTrue(pair.comparePointsOnHorizontalLine(229, 200));
+        assertTrue(pair.comparePointsOnHorizontalLine(340, 200));
+
+        // Verify that the two images don't differ too much overall        
+        float diff = pair.fractionalDifference();
+        System.out.println("Fractional difference between samples: " + diff);
+        assertTrue(diff < 0.1);
+    }
+    
     public void testTransformations() throws Exception {
         AssetManager assets = getContext().getAssets();
         SVG svg = SVGParser.getSVGFromAsset(assets, "svg/transformations.svg");

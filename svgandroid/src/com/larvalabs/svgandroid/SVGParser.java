@@ -202,7 +202,7 @@ public class SVGParser {
         //Util.debug("Parsing numbers from: '" + s + "'");
         int n = s.length();
         int p = 0;
-        ArrayList<Float> numbers = new ArrayList<Float>();
+        ArrayList<Double> numbers = new ArrayList<Double>();
         boolean skipChar = false;
         for (int i = 1; i < n; i++) {
             if (skipChar) {
@@ -236,22 +236,28 @@ public class SVGParser {
                     String str = s.substring(p, i);
                     if (str.trim().length() > 0) {
                         //Util.debug("  Last: " + str);
-                        Float f = Float.parseFloat(str);
+                        Double f = Double.parseDouble(str);
                         numbers.add(f);
                     }
                     p = i;
                     return new NumberParse(numbers, p);
                 }
+                //
+                case 'e':
+                case 'E':
+                case '-':
+                case '+':
+                	break;
                 case '\n':
                 case '\t':
                 case ' ':
                 case ',':
-                case '-': {
+                 {
                     String str = s.substring(p, i);
                     // Just keep moving if multiple whitespace
                     if (str.trim().length() > 0) {
                         //Util.debug("  Next: " + str);
-                        Float f = Float.parseFloat(str);
+                        Double f = Double.parseDouble(str);
                         numbers.add(f);
                         if (c == '-') {
                             p = i;
@@ -270,7 +276,7 @@ public class SVGParser {
         if (last.length() > 0) {
             //Util.debug("  Last: " + last);
             try {
-                numbers.add(Float.parseFloat(last));
+                numbers.add(Double.parseDouble(last));
             } catch (NumberFormatException nfe) {
                 // Just white-space, forget it
             }
@@ -279,6 +285,7 @@ public class SVGParser {
         return new NumberParse(numbers, p);
     }
 
+   
     private static Matrix parseTransform(String s) {
         if (s.startsWith("matrix(")) {
             NumberParse np = parseNumbers(s.substring("matrix(".length()));
@@ -286,13 +293,13 @@ public class SVGParser {
                 Matrix matrix = new Matrix();
                 matrix.setValues(new float[]{
                         // Row 1
-                        np.numbers.get(0),
-                        np.numbers.get(2),
-                        np.numbers.get(4),
+                        np.numbers.get(0).floatValue(),
+                        np.numbers.get(2).floatValue(),
+                        np.numbers.get(4).floatValue(),
                         // Row 2
-                        np.numbers.get(1),
-                        np.numbers.get(3),
-                        np.numbers.get(5),
+                        np.numbers.get(1).floatValue(),
+                        np.numbers.get(3).floatValue(),
+                        np.numbers.get(5).floatValue(),
                         // Row 3
                         0,
                         0,
@@ -303,10 +310,10 @@ public class SVGParser {
         } else if (s.startsWith("translate(")) {
             NumberParse np = parseNumbers(s.substring("translate(".length()));
             if (np.numbers.size() > 0) {
-                float tx = np.numbers.get(0);
+                float tx = np.numbers.get(0).floatValue();
                 float ty = 0;
                 if (np.numbers.size() > 1) {
-                    ty = np.numbers.get(1);
+                    ty = np.numbers.get(1).floatValue();
                 }
                 Matrix matrix = new Matrix();
                 matrix.postTranslate(tx, ty);
@@ -315,10 +322,10 @@ public class SVGParser {
         } else if (s.startsWith("scale(")) {
             NumberParse np = parseNumbers(s.substring("scale(".length()));
             if (np.numbers.size() > 0) {
-                float sx = np.numbers.get(0);
+                float sx = np.numbers.get(0).floatValue();
                 float sy = 0;
                 if (np.numbers.size() > 1) {
-                    sy = np.numbers.get(1);
+                    sy = np.numbers.get(1).floatValue();
                 }
                 Matrix matrix = new Matrix();
                 matrix.postScale(sx, sy);
@@ -327,7 +334,7 @@ public class SVGParser {
         } else if (s.startsWith("skewX(")) {
             NumberParse np = parseNumbers(s.substring("skewX(".length()));
             if (np.numbers.size() > 0) {
-                float angle = np.numbers.get(0);
+                float angle = np.numbers.get(0).floatValue();
                 Matrix matrix = new Matrix();
                 matrix.postSkew((float) Math.tan(angle), 0);
                 return matrix;
@@ -335,7 +342,7 @@ public class SVGParser {
         } else if (s.startsWith("skewY(")) {
             NumberParse np = parseNumbers(s.substring("skewY(".length()));
             if (np.numbers.size() > 0) {
-                float angle = np.numbers.get(0);
+                float angle = np.numbers.get(0).floatValue();
                 Matrix matrix = new Matrix();
                 matrix.postSkew(0, (float) Math.tan(angle));
                 return matrix;
@@ -343,12 +350,12 @@ public class SVGParser {
         } else if (s.startsWith("rotate(")) {
             NumberParse np = parseNumbers(s.substring("rotate(".length()));
             if (np.numbers.size() > 0) {
-                float angle = np.numbers.get(0);
+                float angle = np.numbers.get(0).floatValue();
                 float cx = 0;
                 float cy = 0;
                 if (np.numbers.size() > 2) {
-                    cx = np.numbers.get(1);
-                    cy = np.numbers.get(2);
+                    cx = np.numbers.get(1).floatValue();
+                    cy = np.numbers.get(2).floatValue();
                 }
                 Matrix matrix = new Matrix();
                 matrix.postTranslate(cx, cy);
@@ -622,10 +629,10 @@ public class SVGParser {
     }
 
     private static class NumberParse {
-        private ArrayList<Float> numbers;
+        private ArrayList<Double> numbers;
         private int nextCmd;
 
-        public NumberParse(ArrayList<Float> numbers, int nextCmd) {
+        public NumberParse(ArrayList<Double> numbers, int nextCmd) {
             this.numbers = numbers;
             this.nextCmd = nextCmd;
         }
@@ -634,7 +641,7 @@ public class SVGParser {
             return nextCmd;
         }
 
-        public float getNumber(int index) {
+        public double getNumber(int index) {
             return numbers.get(index);
         }
 
@@ -1124,14 +1131,14 @@ public class SVGParser {
                 NumberParse numbers = getNumberParseAttr("points", atts);
                 if (numbers != null) {
                     Path p = new Path();
-                    ArrayList<Float> points = numbers.numbers;
+                    ArrayList<Double> points = numbers.numbers;
                     if (points.size() > 1) {
                         pushTransform(atts);
                         Properties props = new Properties(atts);
-                        p.moveTo(points.get(0), points.get(1));
+                        p.moveTo(points.get(0).floatValue(), points.get(1).floatValue());
                         for (int i = 2; i < points.size(); i += 2) {
-                            float x = points.get(i);
-                            float y = points.get(i + 1);
+                            float x = points.get(i).floatValue();
+                            float y = points.get(i + 1).floatValue();
                             p.lineTo(x, y);
                         }
                         // Don't close a polyline
